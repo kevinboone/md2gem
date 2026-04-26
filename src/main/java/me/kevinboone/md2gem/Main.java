@@ -39,6 +39,9 @@ public class Main
     Option spacingOption = new Option ("s", "spacing", false, 
       "Add extra vertical spacing");  
     options.addOption (spacingOption); 
+    Option versionOption = new Option ("v", "version", false, 
+      "Show version");  
+    options.addOption (versionOption); 
     Option helpOption = new Option ("h", "help", false, "Show help");  
     options.addOption (helpOption);  
     CommandLineParser clparser = new DefaultParser();  
@@ -60,6 +63,12 @@ public class Main
     if (cmd.hasOption("h")) 
       {  
       printHelp (options);  
+      System.exit (0);  
+      } 
+
+    if (cmd.hasOption("v")) 
+      {  
+      printVersion();  
       System.exit (0);  
       } 
 
@@ -120,6 +129,14 @@ public class Main
     {  
     HelpFormatter formatter = new HelpFormatter();  
     formatter.printHelp ("java -jar md2gem [options] {input_file} [output_file]", options);
+    } 
+
+  private static void printVersion() 
+    {  
+    System.out.print (Version.APP_NAME);
+    System.out.print (" version ");
+    System.out.println (Version.VERSION);
+    System.out.println (Version.COPY_MSG);
     } 
 
   }

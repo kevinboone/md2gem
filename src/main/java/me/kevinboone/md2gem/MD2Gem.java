@@ -122,21 +122,6 @@ class MyVisitor extends AbstractVisitor
     putLinksOnEnd (para, para);
     }
 
-  /** For each Link mode, pick out the link text and add
-      the new link to the current list for the paragraph. 
-  */
-  @Override
-  public void visit (Link link) 
-    {
-/*
-    String href = link.getDestination();
-    String text = extractText (link);
-    if (text.length() == 0) text = href;
-    GemLink gemLink = new GemLink (href, text); 
-    links.addElement (gemLink);
-*/
-    }
-
   private void extractLinks (Node node, Vector<GemLink> links)
     {
     Node n = node.getFirstChild();

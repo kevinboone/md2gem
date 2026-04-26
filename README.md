@@ -1,6 +1,6 @@
 # md2gem
 
-Version 1.0, April 2026
+Version 0.1, April 2026
 
 ## What is this?
 
@@ -24,6 +24,7 @@ install, just copy the `md2gem` JAR file to any convenient place, and run it usi
       -h,--help          Show help
       -n,--no-unicode    Disable Unicode line drawing
       -s,--spacing       Add extra vertical spacing
+      -v,--version       Show version 
 
 Either or both of `input_file` and `output_file` may be "`-`", indicating
 standard input and standard output respectively. Omitting one or both
