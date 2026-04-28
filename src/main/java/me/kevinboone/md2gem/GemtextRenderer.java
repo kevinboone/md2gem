@@ -35,6 +35,7 @@ class GemtextRenderer implements Renderer
   private boolean spaceTables = false; 
   private boolean spaceQuoted = false;
   private boolean spacePreformat = false;
+  private boolean spaceParas = false;
   private boolean unicodeLineDrawing = true;
   private String tableColSep; // Column separator 
   private String linkPreamble; // Write this before link text in the para
@@ -54,22 +55,39 @@ class GemtextRenderer implements Renderer
     linkPostamble = "]";
     if (config.getExtraSpacing())
       {
-      spaceTables = true; 
-      spaceQuoted = true;
-      spacePreformat = true;
+      spaceTables = false; 
+      spaceQuoted = false;
+      spacePreformat = false;
+      spaceParas = true;
+      }
+    else
+      {
+      spaceTables = false; 
+      spaceQuoted = false;
+      spacePreformat = false;
+      spaceParas = false;
       }
     }
 
-  /** Add some text to the current paragraph. We have to add some white
-      space also, because the parser strips it. This means that we'll
-      sometimes have to trim the whitespace if it ends up separating two
-      elements that should not be separated. 
+  /** Add some text to the current paragraph. In practice, we just add
+      the input String to the existing paragraph.
   */
   private void addToPara (String s)
     {
-    para += s + " ";
+    para = concatenate (para, s);
     }
 
+  /** There's no need for this method -- it's here in case I one day 
+      need to do something more complicated the "+" to concatenate
+      text elements. 
+  */
+  private String concatenate (String s1, String s2)
+    {
+    return s1 + s2;
+    }
+
+  /** Recursively extract all the text from the specified node.
+  */
   private String extractText (Node node) 
     {
     String ret = "";
@@ -81,20 +99,17 @@ class GemtextRenderer implements Renderer
         {
         Text nt = (Text)n;
         String text = nt.getLiteral();
-        if (ret.length() > 0 && text.length() > 0) ret += " ";
-        ret += text;
+        ret = concatenate (ret, text);
         }
       if (n instanceof Link)
         {
         String text = linkPreamble + extractText (n) + linkPostamble;
-        if (ret.length() > 0 && text.length() > 0) ret += " ";
-        ret += text;
+        ret = concatenate (ret, text);
         }
       else
         {
         String text = extractText (n);
-        if (ret.length() > 0 && text.length() > 0) ret += " ";
-        ret += text;
+        ret = concatenate (ret, text);
         }
       Node next = n.getNext();
       n = next;
@@ -106,10 +121,12 @@ class GemtextRenderer implements Renderer
   /** Add the current paragraph to the output buffer, then clear the
       paragraph buffer for the next paragraph. 
   */
-  private void flushPara (Appendable a)
+  private void flushPara (Appendable a, boolean space)
     {
     write (para, a);
     newline (a);
+    if (space)
+      newline (a);
     para = "";
     }
   
@@ -297,7 +314,7 @@ class GemtextRenderer implements Renderer
     else if (node instanceof Paragraph)
       renderParagraph ((Paragraph) node, a);
     else if (node instanceof SoftLineBreak)
-      { /* ignore */ } 
+      { addToPara (" "); } 
     else if (node instanceof StrongEmphasis)
       renderEmphasis (node, (Delimited)node, a);
     else if (node instanceof TableBlock)
@@ -345,11 +362,36 @@ class GemtextRenderer implements Renderer
   */
   private void renderEmphasis (Node node, Delimited d, Appendable a)
     {
-    if (config.getRetainEmphasis())
-      para += d.getOpeningDelimiter();
-    renderChildren (node, a);
-    if (config.getRetainEmphasis())
-      para += d.getClosingDelimiter();
+    int emphMode = config.getEmphMode();
+    if (emphMode == Config.EMPH_STRIP)
+      {
+      String s = extractText (node);
+      addToPara (s);
+      }
+    else if (emphMode == Config.EMPH_RETAIN)
+      {
+      String s = extractText (node);
+      addToPara (d.getOpeningDelimiter());
+      addToPara (s);
+      addToPara (d.getClosingDelimiter());
+      }
+    else
+      {
+      /* NOT YET IMPLEMENTED */
+      /*
+      String s = d.getOpeningDelimiter();
+      UnicodeEmphasizer ue;
+      if ("**".equals (s))
+        ue = new UnicodeEmphasizer (UnicodeEmphasizer.BOLD);
+      else if ("___".equals (s))
+        ue = new UnicodeEmphasizer (UnicodeEmphasizer.BOLDITALIC);
+      else  
+        ue = new UnicodeEmphasizer (UnicodeEmphasizer.ITALIC);
+      String text = extractText (node);
+      String ss = ue.emphasize (text);
+      addToPara (ss);
+      */
+      }
     }
 
   /** Handle `code` elements inline. I don't really understand why 
@@ -358,11 +400,11 @@ class GemtextRenderer implements Renderer
   */
   private void renderCode (Code node, Appendable a)
     {
-    if (config.getRetainEmphasis())
-      para += "`"; 
-    para += node.getLiteral(); 
-    if (config.getRetainEmphasis())
-      para += "`";
+    if (config.getEmphMode() == Config.EMPH_RETAIN)
+      addToPara ("`"); 
+    addToPara (node.getLiteral()); 
+    if (config.getEmphMode() == Config.EMPH_RETAIN)
+      addToPara ("`");
     }
 
   /** Handle pre-formatted blocks that are introduced by a specific
@@ -383,7 +425,7 @@ class GemtextRenderer implements Renderer
       like preformatted text or a list. */
   private void renderHardLineBreak (HardLineBreak node, Appendable a)
     {
-    flushPara (a);
+    flushPara (a, false);
     }
 
   /** Handle "#" headings, which is easy, because they're the same in
@@ -396,7 +438,7 @@ class GemtextRenderer implements Renderer
     s += " ";
     pushPrefix (s);
     renderChildren (node, a);
-    flushPara (a);
+    flushPara (a, false);
     popPrefix();
     }
 
@@ -453,11 +495,10 @@ class GemtextRenderer implements Renderer
     Node n = node.getFirstChild();
     if (n instanceof Text) isText = true;
     if (isText)
-     para += linkPreamble;
+      addToPara (linkPreamble);
     renderChildren (node, a);
-    para = para.trim();
     if (isText)
-      para += linkPostamble;
+      addToPara (linkPostamble);
     }
 
   /** I'm not really sure how to handle this in Gemtext. It doesn't
@@ -485,7 +526,12 @@ class GemtextRenderer implements Renderer
   private void renderParagraph (Paragraph node, Appendable a)
     {
     renderChildren (node, a);
-    flushPara (a);
+    boolean space = (spaceParas) && (node.getParent() instanceof Document);
+    Node n = node.getLastChild();
+    if (n instanceof HardLineBreak)
+      flushPara (a, false);
+    else
+      flushPara (a, space);
     }
 
   /** This is the top level of the table hierarchy. Below this we

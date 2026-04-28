@@ -24,7 +24,8 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;  
  
-
+/** This is the class that does most of the work.
+*/
 public class MD2Gem
   {
   /** This method dumps a node tree, for debugging purposes.

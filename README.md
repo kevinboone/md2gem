@@ -1,6 +1,6 @@
 # md2gem
 
-Version 0.1, April 2026
+Version 0.1a, April 2026
 
 ## What is this?
 
@@ -99,7 +99,8 @@ fit with one space before and after.
 By default, `md2gem` writes a fairly compact Gemtext file, with no additional
 vertical spacing (that is, no blank lines). The `-s` switch makes the utility
 add a blank line between many block display elements -- images, pre-formatted
-blocks, and so on -- which can improve the appearance of complicated pages.
+blocks, and so on -- which can improve the appearance, particular with
+Gemini clients that don't add any spacing around paragraphs.
 
 ## Things to watch out for
 
@@ -182,4 +183,13 @@ The binary distribution contains the following open-source libraries.
 [open-source licence](https://github.com/commonmark/commonmark-java/blob/main/LICENSE.txt)
 
 Please report bugs through GitHub.
+
+## Release history
+
+0.1a April 2026  
+* Fixed a problem with erratic spacing between sentence fragments
+* Extended the `--spacing` option to include individual paragraphs
+
+0.1 April 2026
+* First release
 

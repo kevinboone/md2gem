@@ -78,9 +78,9 @@ public class Main
       config.setUnicodeLineDrawing (true);
 
     if (cmd.hasOption("e")) 
-      config.setRetainEmphasis (false);
+      config.setEmphMode (Config.EMPH_STRIP);
     else
-      config.setRetainEmphasis (true);
+      config.setEmphMode (Config.EMPH_RETAIN);
 
     if (cmd.hasOption("s")) 
       config.setExtraSpacing (true);
