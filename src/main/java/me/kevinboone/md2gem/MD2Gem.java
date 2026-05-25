@@ -55,7 +55,7 @@ public class MD2Gem
     Node document = parser.parse (input);
 
     // Modify the node tree
-    MyVisitor visitor = new MyVisitor();
+    MyVisitor visitor = new MyVisitor (config);
     document.accept (visitor);
 
     //dumpNode (document, 0);   
@@ -81,6 +81,13 @@ public class MD2Gem
 class MyVisitor extends AbstractVisitor 
   {
   Vector<GemLink> links = new Vector<GemLink>();
+  Config config;
+
+  public MyVisitor (Config config)
+    {
+    super();
+    this.config = config;
+    }
 
   /** Descend the node tree, picking out any text elements as
       we go. This should capture any text associated with the
@@ -176,11 +183,16 @@ class MyVisitor extends AbstractVisitor
       target.appendChild (new HardLineBreak());
       if (n != null)
         {
-	for (GemLink link : links)
+        int l = links.size();
+	for (int i = 0; i < l; i++)
 	  {
+          GemLink link = links.elementAt (i);
 	  String text = link.toString(); 
+          if (config.getRewriteLinks() && text.indexOf (':') <= 0)
+            text = text.replaceAll ("\\.md", "\\.gmi");
 	  target.appendChild (new Text (text));
-	  target.appendChild (new HardLineBreak());
+          if (i != l - 1)
+	    target.appendChild (new HardLineBreak());
 	  }
         }
       }

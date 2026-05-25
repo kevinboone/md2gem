@@ -20,14 +20,17 @@ public class Config
 
   private static boolean unicodeLineDrawing = true;
   private static boolean extraSpacing = true;
+  private static boolean rewriteLinks = false;
   private static int emphMode = EMPH_UNICODE; // TODO
   //private static int emphMode = EMPH_RETAIN; // TODO
 
   public int getEmphMode() { return emphMode; }
   public boolean getExtraSpacing () { return extraSpacing; }
+  public boolean getRewriteLinks () { return rewriteLinks; }
   public boolean getUnicodeLineDrawing() { return unicodeLineDrawing; }
   public void setEmphMode (int n) { emphMode = n; }
   public void setExtraSpacing (boolean f) { extraSpacing = f; }
+  public void setRewriteLinks (boolean f) { rewriteLinks = f; }
   public void setUnicodeLineDrawing (boolean f) { unicodeLineDrawing = f; }
   }
 

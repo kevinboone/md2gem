@@ -1,6 +1,6 @@
 # md2gem
 
-Version 0.1a, April 2026
+Version 0.1b, May 2026
 
 ## What is this?
 
@@ -22,6 +22,7 @@ install, just copy the `md2gem` JAR file to any convenient place, and run it usi
     Options:
       -e,--no-emphasis   Don't retain Markdown emphasis
       -h,--help          Show help
+      -l,--links         Rewrite .md links to .gmi links
       -n,--no-unicode    Disable Unicode line drawing
       -s,--spacing       Add extra vertical spacing
       -v,--version       Show version 
@@ -60,6 +61,10 @@ But this would be better:
 ```
 You can find this on the [ACME Laser Cannon](https://lasers.acme.com) site.
 ```
+
+The `-l` options tells `md2gem` to convert relative links whose targets end in
+`.md` to links ending in `.gmi`. This is to handle batch conversion situations,
+where a set of related Markdown files are all converted to Gemtext.
 
 ## How `md2gem` handles emphasis and in-line formatting
 
@@ -185,6 +190,10 @@ The binary distribution contains the following open-source libraries.
 Please report bugs through GitHub.
 
 ## Release history
+
+0.1b May 2026
+* Completely rewrote the renderer
+* Added option (-l) to rewrite relative .md links as .gmi links
 
 0.1a April 2026  
 * Fixed a problem with erratic spacing between sentence fragments

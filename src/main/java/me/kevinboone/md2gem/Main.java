@@ -39,6 +39,9 @@ public class Main
     Option spacingOption = new Option ("s", "spacing", false, 
       "Add extra vertical spacing");  
     options.addOption (spacingOption); 
+    Option linksOption = new Option ("l", "links", false, 
+      "Transform .md links to .gmi links");  
+    options.addOption (linksOption); 
     Option versionOption = new Option ("v", "version", false, 
       "Show version");  
     options.addOption (versionOption); 
@@ -81,6 +84,11 @@ public class Main
       config.setEmphMode (Config.EMPH_STRIP);
     else
       config.setEmphMode (Config.EMPH_RETAIN);
+
+    if (cmd.hasOption("l")) 
+      config.setRewriteLinks (true);
+    else
+      config.setRewriteLinks (false);
 
     if (cmd.hasOption("s")) 
       config.setExtraSpacing (true);

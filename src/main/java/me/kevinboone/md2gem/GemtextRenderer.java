@@ -24,7 +24,7 @@ import java.util.*;
     commonmark-java with a few modifications, but I couldn't really
     figure out how to use it. So I fear I may have re-implemented it.
 */ 
-class GemtextRenderer implements Renderer 
+class GemtextRenderer 
   {
   private String para = ""; // The paragraph we are working on
   /** The prefix stack holds prefixes (like "*") that apply 
@@ -56,7 +56,7 @@ class GemtextRenderer implements Renderer
     if (config.getExtraSpacing())
       {
       spaceTables = false; 
-      spaceQuoted = false;
+      spaceQuoted = true;
       spacePreformat = false;
       spaceParas = true;
       }
@@ -67,14 +67,6 @@ class GemtextRenderer implements Renderer
       spacePreformat = false;
       spaceParas = false;
       }
-    }
-
-  /** Add some text to the current paragraph. In practice, we just add
-      the input String to the existing paragraph.
-  */
-  private void addToPara (String s)
-    {
-    para = concatenate (para, s);
     }
 
   /** There's no need for this method -- it's here in case I one day 
@@ -117,19 +109,6 @@ class GemtextRenderer implements Renderer
     return ret;
     }
 
-
-  /** Add the current paragraph to the output buffer, then clear the
-      paragraph buffer for the next paragraph. 
-  */
-  private void flushPara (Appendable a, boolean space)
-    {
-    write (para, a);
-    newline (a);
-    if (space)
-      newline (a);
-    para = "";
-    }
-  
   /** Given a TableHead or TableBody node, enumerate the rows contained, 
       and fill in the lengths[] array with the longest text in each column. 
   */
@@ -256,14 +235,6 @@ class GemtextRenderer implements Renderer
     return new String (s);
     }
 
-  /** Remove the most recently-added prefix (which almost certainly means
-      emptying the prefix stack.
-  */
-  private void popPrefix()
-    {
-    prefixes.pop();
-    }
-
   /** Add a prefix (like "*" or ">") so that it will be added to all lines
       in the current paragraph.
   */
@@ -272,27 +243,27 @@ class GemtextRenderer implements Renderer
     prefixes.push (prefix);
     }
 
-  @Override
+  //@Override
   public String render (Node node)
     {
     StringBuffer sb = new StringBuffer();
-    render (node, sb);
+    render (node, sb, "");
     return new String (sb);
     }
 
   /** Start rendering here.
   */
-  @Override
-  public void render (Node node, Appendable a)
+  //@Override
+  public void render (Node node, Appendable a, String prefixes)
     {
     if (node instanceof BlockQuote)
-      renderBlockQuote ((BlockQuote)node, a);
+      renderBlockQuote ((BlockQuote)node, a, "");
     else if (node instanceof BulletList)
-      renderBulletList ((BulletList)node, a);
+      renderBulletList ((BulletList)node, a, "");
     else if (node instanceof Code)
       renderCode ((Code)node, a);
     else if (node instanceof Document)
-      renderChildren (node, a);
+      renderChildren (node, a, "");
     else if (node instanceof Emphasis)
       renderEmphasis (node, (Delimited)node, a);
     else if (node instanceof FencedCodeBlock)
@@ -308,52 +279,46 @@ class GemtextRenderer implements Renderer
     else if (node instanceof Link)
       renderLink ((Link)node, a);
     else if (node instanceof ListItem)
-      renderChildren (node, a);
+      renderChildren (node, a, prefixes);
     else if (node instanceof OrderedList)
-      renderOrderedList ((OrderedList) node, a);
+      renderOrderedList ((OrderedList) node, a, prefixes);
     else if (node instanceof Paragraph)
-      renderParagraph ((Paragraph) node, a);
+      renderParagraph ((Paragraph) node, a, prefixes);
     else if (node instanceof SoftLineBreak)
-      { addToPara (" "); } 
+      { write (" ", a); } // TODO 
     else if (node instanceof StrongEmphasis)
       renderEmphasis (node, (Delimited)node, a);
     else if (node instanceof TableBlock)
       renderTableBlock ((TableBlock) node, a);
     else if (node instanceof Text)
-      renderText ((Text) node, a);
+      renderText ((Text) node, a, prefixes);
     else if (node instanceof ThematicBreak)
       { /* ignore */ } 
     else
       System.err.println ("Unknown node: " + node);
     }
 
-  private void renderBlockQuote (BlockQuote node, Appendable a)
+  private void renderBlockQuote (BlockQuote node, Appendable a, String prefixes)
     {
-    if (spaceQuoted)
-      newline (a); 
-    pushPrefix ("> ");
-    renderChildren (node, a);
-    popPrefix();
+    renderChildren (node, a, "> ");
     if (spaceQuoted)
       newline (a); 
     }
 
-  private void renderBulletList (BulletList node, Appendable a)
+  private void renderBulletList (BulletList node, Appendable a, String prefixes)
     {
-    pushPrefix ("* ");
-    renderChildren (node, a);
-    popPrefix();
+    renderChildren (node, a, "* ");
     }
  
   /** Recursively descend the node tree, rendering as we go. 
   */
-  private void renderChildren (Node parent, Appendable a)
+  private void renderChildren (Node parent, Appendable a, String prefixes)
     {
     Node node = parent.getFirstChild();
     while (node != null) 
       {
       Node next = node.getNext();
-      render (node, a);
+      render (node, a, prefixes);
       node = next;
       }
     }
@@ -366,14 +331,14 @@ class GemtextRenderer implements Renderer
     if (emphMode == Config.EMPH_STRIP)
       {
       String s = extractText (node);
-      addToPara (s);
+      write (s, a);
       }
     else if (emphMode == Config.EMPH_RETAIN)
       {
       String s = extractText (node);
-      addToPara (d.getOpeningDelimiter());
-      addToPara (s);
-      addToPara (d.getClosingDelimiter());
+      write (d.getOpeningDelimiter(), a);
+      write (s, a);
+      write (d.getClosingDelimiter(), a);
       }
     else
       {
@@ -401,10 +366,10 @@ class GemtextRenderer implements Renderer
   private void renderCode (Code node, Appendable a)
     {
     if (config.getEmphMode() == Config.EMPH_RETAIN)
-      addToPara ("`"); 
-    addToPara (node.getLiteral()); 
+      write ("`", a); 
+    write (node.getLiteral(), a); 
     if (config.getEmphMode() == Config.EMPH_RETAIN)
-      addToPara ("`");
+      write ("`", a);
     }
 
   /** Handle pre-formatted blocks that are introduced by a specific
@@ -425,7 +390,7 @@ class GemtextRenderer implements Renderer
       like preformatted text or a list. */
   private void renderHardLineBreak (HardLineBreak node, Appendable a)
     {
-    flushPara (a, false);
+    write ("\n", a); 
     }
 
   /** Handle "#" headings, which is easy, because they're the same in
@@ -436,10 +401,9 @@ class GemtextRenderer implements Renderer
     for (int i = 0; i < node.getLevel(); i++)
        s += "#";
     s += " ";
-    pushPrefix (s);
-    renderChildren (node, a);
-    flushPara (a, false);
-    popPrefix();
+    write (s, a);
+    renderChildren (node, a, "");
+    write ("\n", a);
     }
 
   /** Render a markdown image, adding the caption/alt-text as appropriate.
@@ -447,9 +411,9 @@ class GemtextRenderer implements Renderer
   private void renderImage (Image node, Appendable a)
     {
     String title = node.getTitle();
-    addToPara ("=> ");
-    addToPara (node.getDestination());
-    addToPara (" ");
+    write ("=> ", a);
+    write (node.getDestination(), a);
+    write (" ", a);
     if (title == null)
       {
       Node n2 = node.getFirstChild();
@@ -458,18 +422,18 @@ class GemtextRenderer implements Renderer
 	Text n2t = (Text)n2;
 	String s = n2t.getLiteral();
 	if (s == null || s.length() == 0)
-	  addToPara (node.getDestination());
+	  write (node.getDestination(), a);
 	else
-	  addToPara (s);
+	  write (s, a);
 	}
       else
         {
-        addToPara (node.getDestination());
+        write (node.getDestination(), a);
         }
       }
     else
       {
-      addToPara (title);
+      write (title, a);
       }
     }
 
@@ -495,17 +459,17 @@ class GemtextRenderer implements Renderer
     Node n = node.getFirstChild();
     if (n instanceof Text) isText = true;
     if (isText)
-      addToPara (linkPreamble);
-    renderChildren (node, a);
+      write (linkPreamble, a);
+    renderChildren (node, a, "");
     if (isText)
-      addToPara (linkPostamble);
+      write (linkPostamble, a);
     }
 
   /** I'm not really sure how to handle this in Gemtext. It doesn't
       have a specific numbered list format, but it doesn't really
       need one; we'll just write our own numbers. 
   */
-  private void renderOrderedList (OrderedList node, Appendable a)
+  private void renderOrderedList (OrderedList node, Appendable a, String prefixes)
     {
     Node n = node.getFirstChild();
     int start = node.getStartNumber();
@@ -514,7 +478,7 @@ class GemtextRenderer implements Renderer
       {
       Node next = n.getNext();
       write ("" + num + ". ", a);
-      renderChildren (n, a);
+      renderChildren (n, a, prefixes);
       n = next;
       num++;
       }
@@ -523,15 +487,17 @@ class GemtextRenderer implements Renderer
   /** This is where most of the actual output happens. We just render
       everything below the Paragraph node, and then flush the
       changes to the output. */
-  private void renderParagraph (Paragraph node, Appendable a)
+  private void renderParagraph (Paragraph node, Appendable a, String prefixes)
     {
-    renderChildren (node, a);
-    boolean space = (spaceParas) && (node.getParent() instanceof Document);
-    Node n = node.getLastChild();
-    if (n instanceof HardLineBreak)
-      flushPara (a, false);
+    write (prefixes, a);
+    renderChildren (node, a, "");
+    if (spaceParas)
+      {
+      write ("\n" + prefixes, a);
+      write ("\n", a); // IF SPACE
+      }
     else
-      flushPara (a, space);
+      write ("\n", a);
     }
 
   /** This is the top level of the table hierarchy. Below this we
@@ -717,9 +683,9 @@ class GemtextRenderer implements Renderer
       a literal value. However, the real text in the document might be
       split into multiple Text nodes, which we have to concatenate.
   */
-  private void renderText (Text node, Appendable a)
+  private void renderText (Text node, Appendable a, String prefixes)
     {
-    addToPara (node.getLiteral());
+    write (prefixes + node.getLiteral(), a);
     }
 
   /** Write the text to the output appender, preceded
@@ -729,10 +695,12 @@ class GemtextRenderer implements Renderer
     {
     try
       {
-      if (s.length() > 1)
+      if (s.length() > 0 && s.charAt(0) != 10)
         {
         if (!s.startsWith ("=>"))
+          {
           a.append (makePrefixes ());
+          }
         }
       a.append (s);
       }
