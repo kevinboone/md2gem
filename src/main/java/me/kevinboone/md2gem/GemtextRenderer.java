@@ -269,7 +269,7 @@ class GemtextRenderer
     else if (node instanceof FencedCodeBlock)
       renderFencedCodeBlock ((FencedCodeBlock) node, a);
     else if (node instanceof HardLineBreak)
-      renderHardLineBreak ((HardLineBreak) node, a);
+      renderHardLineBreak ((HardLineBreak) node, a, prefixes);
     else if (node instanceof Heading)
       renderHeading ((Heading) node, a);
     else if (node instanceof Image)
@@ -388,9 +388,10 @@ class GemtextRenderer
   /** In a hard break, just flush the current paragraph and put
       a newline on the end. A hard break _can_ appear in a block
       like preformatted text or a list. */
-  private void renderHardLineBreak (HardLineBreak node, Appendable a)
+  private void renderHardLineBreak (HardLineBreak node, Appendable a, String prefixes)
     {
     write ("\n", a); 
+    write (prefixes, a); 
     }
 
   /** Handle "#" headings, which is easy, because they're the same in
@@ -490,7 +491,7 @@ class GemtextRenderer
   private void renderParagraph (Paragraph node, Appendable a, String prefixes)
     {
     write (prefixes, a);
-    renderChildren (node, a, "");
+    renderChildren (node, a, prefixes);
     if (spaceParas)
       {
       write ("\n" + prefixes, a);
@@ -685,7 +686,8 @@ class GemtextRenderer
   */
   private void renderText (Text node, Appendable a, String prefixes)
     {
-    write (prefixes + node.getLiteral(), a);
+    //write (prefixes + node.getLiteral(), a);
+    write (node.getLiteral(), a);
     }
 
   /** Write the text to the output appender, preceded

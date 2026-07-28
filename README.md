@@ -1,6 +1,6 @@
 # md2gem
 
-Version 0.1b, May 2026
+Version 0.1c, July 2026
 
 ## What is this?
 
@@ -190,6 +190,9 @@ The binary distribution contains the following open-source libraries.
 Please report bugs through GitHub.
 
 ## Release history
+
+0.1c July 2026
+* Fixed (I hope) handling of hard line breaks without block-quote sections
 
 0.1b May 2026
 * Completely rewrote the renderer
